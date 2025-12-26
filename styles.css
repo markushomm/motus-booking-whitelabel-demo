@@ -46,6 +46,27 @@ body{font-family:Poppins,-apple-system,BlinkMacSystemFont,'SF Pro Display','SF P
 .trainer-select-role{font-size:13px;color:#71717a}
 .trainer-select-hint{font-size:12px;color:#52525b;margin-top:16px}
 
+/* Onboarding Overlay */
+.onboarding-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9997;animation:fadeIn 0.5s ease-out}
+.onboarding-overlay.hide{display:none}
+.onboarding-container{width:100%;max-width:400px;padding:40px 32px;text-align:center}
+.onboarding-slides{position:relative;min-height:280px}
+.onboarding-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:translateX(40px);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);pointer-events:none}
+.onboarding-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
+.onboarding-slide.prev{opacity:0;transform:translateX(-40px)}
+.onboarding-icon{font-size:64px;margin-bottom:24px;animation:onboard-bounce 2s ease-in-out infinite}
+.onboarding-title{font-size:28px;font-weight:600;margin-bottom:16px;letter-spacing:-0.5px}
+.onboarding-desc{font-size:15px;color:#a1a1aa;line-height:1.6;max-width:300px}
+.onboarding-dots{display:flex;justify-content:center;gap:10px;margin:32px 0}
+.onboarding-dot{width:8px;height:8px;border-radius:50%;background:#3f3f46;transition:all 0.3s}
+.onboarding-dot.active{width:24px;border-radius:4px;background:var(--accent)}
+.onboarding-actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+.onboarding-skip{background:none;border:none;color:#71717a;font-size:14px;font-weight:500;cursor:pointer;padding:12px 20px;font-family:inherit}
+.onboarding-skip:hover{color:#a1a1aa}
+.onboarding-next{background:var(--accent);color:#0a0a0a;border:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s}
+.onboarding-next:active{transform:scale(0.96)}
+@keyframes onboard-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .app{max-width:430px;margin:0 auto;display:none}

@@ -43,7 +43,34 @@ const CONFIG = {
     },
 
     // === DEMO MODE ===
-    forceDemo: true  // Diese Instanz läuft immer im Demo-Modus
+    forceDemo: true,  // Diese Instanz läuft immer im Demo-Modus
+
+    // === ONBOARDING (English for demos) ===
+    onboarding: {
+        enabled: true,
+        slides: [
+            {
+                icon: "📅",
+                title: "Smart Booking",
+                desc: "Manage all your dance classes and private lessons in one place. Book, reschedule, and track instantly."
+            },
+            {
+                icon: "👥",
+                title: "Client Management",
+                desc: "Keep track of your students, their packages, and booking history. Identify your most loyal members."
+            },
+            {
+                icon: "📊",
+                title: "Revenue Analytics",
+                desc: "See your earnings at a glance. Weekly, monthly, or yearly - understand your business better."
+            },
+            {
+                icon: "🎨",
+                title: "Your Brand",
+                desc: "Fully customizable colors, logo, and name. This is YOUR booking app - white-labeled for your studio."
+            }
+        ]
+    }
 };
 
 /**
@@ -102,4 +129,99 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', applyConfigColors);
 } else {
     applyConfigColors();
+}
+
+/**
+ * Onboarding System (English Demo)
+ */
+let onboardingSlide = 0;
+
+function initOnboarding() {
+    if (!CONFIG.onboarding?.enabled) return;
+
+    // Check if already seen
+    if (localStorage.getItem('onboarding_seen')) return;
+
+    const overlay = document.getElementById('onboardingOverlay');
+    const slidesContainer = document.getElementById('onboardingSlides');
+    const dotsContainer = document.getElementById('onboardingDots');
+    const nextBtn = document.getElementById('onboardingNext');
+    const skipBtn = document.getElementById('onboardingSkip');
+
+    if (!overlay || !slidesContainer) return;
+
+    // Build slides
+    const slides = CONFIG.onboarding.slides;
+    slidesContainer.innerHTML = slides.map((slide, i) => `
+        <div class="onboarding-slide ${i === 0 ? 'active' : ''}">
+            <div class="onboarding-icon">${slide.icon}</div>
+            <div class="onboarding-title">${slide.title}</div>
+            <div class="onboarding-desc">${slide.desc}</div>
+        </div>
+    `).join('');
+
+    // Build dots
+    dotsContainer.innerHTML = slides.map((_, i) => `
+        <div class="onboarding-dot ${i === 0 ? 'active' : ''}"></div>
+    `).join('');
+
+    // Show overlay
+    overlay.classList.remove('hide');
+
+    // Next button
+    nextBtn.onclick = () => {
+        if (onboardingSlide < slides.length - 1) {
+            goToSlide(onboardingSlide + 1);
+        } else {
+            finishOnboarding();
+        }
+    };
+
+    // Skip button
+    skipBtn.onclick = finishOnboarding;
+
+    // Touch swipe support
+    let touchStartX = 0;
+    overlay.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+    overlay.addEventListener('touchend', e => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0 && onboardingSlide < slides.length - 1) goToSlide(onboardingSlide + 1);
+            else if (diff < 0 && onboardingSlide > 0) goToSlide(onboardingSlide - 1);
+        }
+    });
+}
+
+function goToSlide(index) {
+    const slides = document.querySelectorAll('.onboarding-slide');
+    const dots = document.querySelectorAll('.onboarding-dot');
+    const nextBtn = document.getElementById('onboardingNext');
+
+    slides.forEach((s, i) => {
+        s.classList.remove('active', 'prev');
+        if (i < index) s.classList.add('prev');
+        if (i === index) s.classList.add('active');
+    });
+
+    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+
+    onboardingSlide = index;
+    nextBtn.textContent = index === slides.length - 1 ? 'Get Started' : 'Next';
+}
+
+function finishOnboarding() {
+    const overlay = document.getElementById('onboardingOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.classList.add('hide');
+        overlay.style.opacity = '';
+    }, 300);
+    localStorage.setItem('onboarding_seen', '1');
+}
+
+// Init onboarding after splash
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initOnboarding, 1500));
+} else {
+    setTimeout(initOnboarding, 1500);
 }
