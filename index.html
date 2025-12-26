@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121212">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=6">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=6">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=6">
+<title>Salsa Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css?v=1">
+
+</head>
+<body>
+<div class="lock-screen hide" id="lockScreen">
+<div class="lock-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19c0-2.21 1.79-4 4-4h2c2.21 0 4 1.79 4 4v1.662"/></svg></div>
+<div class="lock-title">Salsa Studio</div>
+<div class="lock-sub" id="lockStatus">Face ID...</div>
+<div class="lock-error" id="lockError"></div>
+<div class="lock-skip" onclick="unlockWithPasskey()">Erneut versuchen</div>
+</div>
+<div class="splash" id="splash"><div class="splash-logo">Salsa Studio</div><div class="splash-booking">booking</div><div class="loader" style="margin-top:24px"></div></div>
+
+<!-- Trainer Selection Screen (First Time) -->
+<div class="trainer-select-screen hide" id="trainerSelectScreen">
+    <div class="trainer-select-content">
+        <div class="trainer-select-logo">Salsa Studio</div>
+        <div class="trainer-select-sub">Wer bist du?</div>
+        <div class="trainer-select-grid" id="trainerSelectGrid">
+            <!-- Dynamisch gefüllt -->
+        </div>
+        <div class="trainer-select-hint">Dieses Gerät merkt sich deine Auswahl</div>
+    </div>
+</div>
+
+<div class="app" id="app">
+<div class="pull-to-refresh" id="pullToRefresh">
+    <div class="ptr-spinner"></div>
+    <span class="ptr-text">Aktualisieren...</span>
+</div>
+<header class="header">
+    <div class="header-brand">
+        <div class="header-logo">Salsa Studio</div>
+        <div class="header-sub"><span id="headerSubText">booking</span><span id="headerDayInfo" style="display:none"></span></div>
+    </div>
+    <div class="header-right">
+        <div class="header-avatar-wrap">
+            <div class="header-avatar" id="headerAvatar" onclick="toggleTrainerPopup(event)"></div>
+            <div class="avatar-flag" id="avatarFlag"></div>
+            <div class="sync-dot" id="syncDot" title="Online"></div>
+            <div class="trainer-popup" id="trainerPopup">
+                <!-- Dynamisch gefüllt -->
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="page active" id="calendarPage">
+    <span id="profileName" style="display:none"></span>
+    <input type="file" id="trainerPhotoInput" accept="image/*" style="display:none" onchange="handleTrainerPhoto(event)">
+
+    <!-- Week Overview Card -->
+    <div class="week-card">
+        <div class="week-card-header">
+            <div id="locationBadge" onclick="openLocationPicker()">
+                <div class="loc-icon" id="locIconHome"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <div class="loc-flat" id="locFlat" style="display:none"><span class="loc-flat-name" id="locFlatName"></span><span class="loc-flat-flag" id="locFlatFlag"></span></div>
+            </div>
+            <div class="week-summary-inline" id="weekNavLabel" onclick="jumpToToday()">KW 52</div>
+        </div>
+        <div class="week-date-nav">
+            <span class="arrow-text" onclick="navDay(-1)">‹</span>
+            <div class="week-date-center" id="schedDate" onclick="toggleCalendar()"></div>
+            <span class="arrow-text" onclick="navDay(1)">›</span>
+        </div>
+        <div class="day-unit-display" id="dayUnitDisplay"></div>
+        <div class="week-chart" id="weekChart"></div>
+    </div>
+
+
+    <div class="section">
+        <div class="view-toggle-new">
+            <div class="view-btn-new active" data-view="next" onclick="setView('next')"><svg viewBox="0 0 24 24" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Dashboard</span></div>
+            <div class="view-btn-new" data-view="day" onclick="setView('day')"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Tag</span></div>
+            <div class="view-btn-cal" id="calToggleBtn" onclick="toggleCalendar()"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5"/></svg><span id="calToggleText">Monat</span></div>
+        </div>
+        <div class="cal-container" id="calContainer">
+            <div class="cal-nav"><button class="cal-btn" onclick="navPrev()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><span class="cal-month" id="calTitle" onclick="toggleCalendar()" style="cursor:pointer">December 2025</span><button class="cal-btn" onclick="navNext()"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button></div>
+            <div class="cal"><div class="weekdays"><div class="wd">Mo</div><div class="wd">Di</div><div class="wd">Mi</div><div class="wd">Do</div><div class="wd">Fr</div><div class="wd weekend">Sa</div><div class="wd weekend">So</div></div><div class="days" id="days"></div></div>
+        </div>
+        <div class="swipe-container" id="swipeContainer"><div class="slots" id="slots"></div></div>
+    </div>
+</div>
+
+<div class="page" id="clientsPage">
+    <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 class="section-title" style="margin:0">Kunden</h2>
+            <button class="icon-btn icon-btn-sm" style="background:#c9a227;border-color:#c9a227;" onclick="openNewClient()"><svg viewBox="0 0 24 24" style="stroke:#121212;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        </div>
+        <div class="search-box"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="clientSearch" placeholder="Suchen..." oninput="filterClients()"><span class="search-count" id="clientCount">0</span></div>
+        <div class="filter-chips">
+            <div class="filter-chip active" data-filter="all" onclick="setClientFilter('all')">Alle</div>
+            <div class="filter-chip" data-filter="member" onclick="setClientFilter('member')">★ Members</div>
+            <div class="filter-chip" data-filter="active" onclick="setClientFilter('active')">Aktiv</div>
+            <div class="filter-chip" data-filter="new" onclick="setClientFilter('new')">Neu</div>
+        </div>
+        <div class="client-list" id="clientList"></div>
+    </div>
+</div>
+
+<div class="page" id="statsPage">
+    <div class="section">
+        <h2 class="section-title">Statistics</h2>
+        <div class="stats-toggle">
+            <div class="stats-toggle-btn active" data-view="week" onclick="setStatsView('week')">Woche</div>
+            <div class="stats-toggle-btn" data-view="month" onclick="setStatsView('month')">Monat</div>
+            <div class="stats-toggle-btn" data-view="year" onclick="setStatsView('year')">Jahr</div>
+            <div class="stats-toggle-btn" data-view="custom" onclick="openCustomRange()">📅</div>
+        </div>
+        <div class="stats-page-nav">
+            <button onclick="statsPageNav(-1)">‹</button>
+            <span class="stats-page-label" id="statsPageLabel" onclick="statsPageOffset=0;renderStats();">Diese Woche</span>
+            <button onclick="statsPageNav(1)">›</button>
+        </div>
+
+        <!-- Hero Section with Chart -->
+        <div class="stats-hero">
+            <div class="stats-hero-top">
+                <div class="stats-hero-left">
+                    <div class="stats-hero-label">Gesamt Einnahmen</div>
+                    <div class="stats-hero-value" id="totalRev">€0</div>
+                </div>
+                <span class="stats-trend" id="statsTrend"></span>
+            </div>
+            <div class="stats-chart-area" id="chartContainer"></div>
+            <div class="stats-kpi-row">
+                <div class="stats-kpi"><div class="stats-kpi-value" id="statsUnits">0</div><div class="stats-kpi-label">Einheiten</div></div>
+                <div class="stats-kpi"><div class="stats-kpi-value" id="statsClients">0</div><div class="stats-kpi-label">Kunden</div></div>
+                <div class="stats-kpi"><div class="stats-kpi-value" id="statsAvgUnit">€0</div><div class="stats-kpi-label">Ø/Einheit</div></div>
+                <div class="stats-kpi"><div class="stats-kpi-value" id="statsAvgDay">0</div><div class="stats-kpi-label">Ø/Tag</div></div>
+            </div>
+        </div>
+
+        <!-- Trainer Section -->
+        <div class="stats-card">
+            <div class="stats-label">Nach Trainer</div>
+            <div class="stats-trainers" id="breakdown"></div>
+        </div>
+
+        <!-- Travel Section -->
+        <div class="stats-travel-card" id="travelStatsCard" style="display:none">
+            <div class="stats-travel-header">
+                <span class="stats-travel-title">✈️ Ausland</span>
+                <span class="stats-travel-total" id="travelTotal">€0</span>
+            </div>
+            <div id="travelStats"></div>
+        </div>
+
+        <!-- Guest Trainer Collapsible -->
+        <div class="stats-collapsible" id="guestAccountingCard" style="display:none">
+            <div class="stats-collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+                <span class="stats-collapsible-title">🎓 Gasttrainer Abrechnung</span>
+                <span class="stats-collapsible-value" id="guestProfitValue">€0</span>
+                <span class="stats-collapsible-arrow">▸</span>
+            </div>
+            <div class="stats-collapsible-content" id="guestAccounting"></div>
+        </div>
+
+        <!-- Camp Collapsible -->
+        <div class="stats-collapsible" id="campStatsCard" style="display:none">
+            <div class="stats-collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+                <span class="stats-collapsible-title">🏕️ Camp Einnahmen</span>
+                <span class="stats-collapsible-value" id="campValue">€0</span>
+                <span class="stats-collapsible-arrow">▸</span>
+            </div>
+            <div class="stats-collapsible-content" id="campStatsContent"></div>
+        </div>
+    </div>
+</div>
+
+<div class="page" id="settingsPage">
+    <div class="section">
+        <h2 class="section-title">Settings</h2>
+
+        <!-- QUICK ACTIONS -->
+        <div class="settings-section">
+            <div class="settings-title">⚡ Quick Actions</div>
+            <div class="quick-links">
+                <button class="quick-link-btn" onclick="openShareAvailability()">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    <span>Teilen</span>
+                </button>
+                <button class="quick-link-btn" onclick="openBookingRequests()" style="position:relative">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>Anfragen</span>
+                    <span id="bookingRequestsQuickBadge" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center">0</span>
+                </button>
+                <button class="quick-link-btn" onclick="openCampRequests()">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h10M7 17h6"/></svg>
+                    <span>Vorlagen</span>
+                </button>
+                <button class="quick-link-btn" onclick="shareGuestInfo()">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+                    <span>Gästeinfo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- REISEN -->
+        <div class="settings-section" id="tripsSection">
+            <div class="settings-title" onclick="toggleSettingsSection('tripsSection')">✈️ Reisen <span class="collapse-icon">▼</span></div>
+
+            <div class="trips-timeline-card" onclick="openTripsSubmenu()">
+                <div class="trips-timeline-header">
+                    <span id="tripsTimelineTitle">📅 Geplante Reisen</span>
+                    <button class="trips-add-mini" onclick="event.stopPropagation();openNewTrip()" title="Neue Reise">+</button>
+                </div>
+                <div class="trips-timeline" id="tripsTimelinePreview">
+                    <div class="timeline-empty">Keine Reisen geplant</div>
+                </div>
+                <div class="trips-timeline-footer">
+                    <span class="trips-timeline-arrow">Alle anzeigen →</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAMP -->
+        <div class="settings-section">
+            <div class="settings-title">🎪 Camp</div>
+            <div class="settings-card">
+            <div class="quick-links" style="margin-bottom:0;padding:12px;border-bottom:1px solid rgba(255,255,255,0.08)">
+                <button class="quick-link-btn" onclick="showQrCode('register')">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    <span>Anmeldung</span>
+                </button>
+                <button class="quick-link-btn" onclick="showQrCode('camp')">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span>Termine</span>
+                </button>
+                <button class="quick-link-btn" onclick="openCampRegistrations()" style="position:relative">
+                    <svg viewBox="0 0 24 24" style="stroke:#888;fill:none;stroke-width:2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Teilnehmer</span>
+                    <span id="campRegQuickBadge" style="position:absolute;top:4px;right:4px;background:#c9a227;color:#000;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center">0</span>
+                </button>
+            </div>
+                <div class="settings-item" onclick="openCampSettings()">
+                    <div class="settings-left">
+                        <div class="settings-icon"><svg viewBox="0 0 24 24" style="stroke:#888"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                        <div><span class="settings-label">Zeitraum</span><span class="settings-desc">Camp Datum festlegen</span></div>
+                    </div>
+                    <span class="settings-value" id="campPreview">-</span>
+                </div>
+                <div class="settings-item" onclick="openCampPricing()">
+                    <div class="settings-left">
+                        <div class="settings-icon"><svg viewBox="0 0 24 24" style="stroke:#888"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                        <div><span class="settings-label">Preise</span><span class="settings-desc">Camp & Tagesgebühren</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALLGEMEIN -->
+        <div class="settings-section">
+            <div class="settings-title">⚙️ Allgemein</div>
+            <div class="settings-card">
+                <div class="settings-item" onclick="openPrices()">
+                    <div class="settings-left">
+                        <div class="settings-icon"><svg viewBox="0 0 24 24" style="stroke:#888"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                        <div><span class="settings-label">Preise</span><span class="settings-desc">45 & 90 Min Tarife</span></div>
+                    </div>
+                </div>
+                <div class="settings-item" onclick="openHours()">
+                    <div class="settings-left">
+                        <div class="settings-icon"><svg viewBox="0 0 24 24" style="stroke:#888"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                        <div><span class="settings-label">Arbeitszeiten</span><span class="settings-desc">Tägliche Verfügbarkeit</span></div>
+                    </div>
+                    <span class="settings-value" id="hoursPreview">9:00 - 20:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GASTTRAINER -->
+        <div class="settings-section">
+            <div class="settings-title">👥 Gasttrainer</div>
+            <div class="settings-card" id="guestTrainerList"></div>
+            <button class="btn btn-secondary settings-add-btn" style="width:100%;margin-top:8px" onclick="openNewGuestTrainer()">+ Neuer Gasttrainer</button>
+        </div>
+
+        <!-- STANDORTE (collapsed) -->
+        <div class="settings-section collapsed" id="locationsSection">
+            <div class="settings-title" onclick="toggleSettingsSection('locationsSection')">📍 Standorte <span class="collapse-icon">▼</span></div>
+
+            <div class="settings-card" style="padding:12px">
+                <div id="locationGrid" class="location-grid"></div>
+            </div>
+
+            <button class="btn btn-secondary settings-add-btn" style="width:100%;margin-top:8px" onclick="openNewLocation()">+ Neuer Standort</button>
+        </div>
+
+        <!-- SYNC & TOOLS (collapsed) -->
+        <div class="settings-section collapsed" id="syncSection">
+            <div class="settings-title" onclick="toggleSettingsSection('syncSection')">🔄 Sync & Tools <span class="collapse-icon">▼</span></div>
+            <div class="settings-card">
+                <div class="settings-item">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(14,165,233,.15)"><svg viewBox="0 0 24 24" style="stroke:#0ea5e9"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg></div>
+                        <div><span class="settings-label">Cloud Status</span><span class="settings-desc">Supabase Verbindung</span></div>
+                    </div>
+                    <span class="settings-value" id="syncInfo" style="color:#22c55e">Online</span>
+                </div>
+                <div class="settings-item" onclick="manualSync()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(14,165,233,.15)"><svg viewBox="0 0 24 24" style="stroke:#0ea5e9"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
+                        <div><span class="settings-label">Synchronisieren</span><span class="settings-desc">Daten von Cloud laden</span></div>
+                    </div>
+                    <span class="settings-value">↻</span>
+                </div>
+                <div class="settings-item" onclick="forceSync()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(249,115,22,.15)"><svg viewBox="0 0 24 24" style="stroke:#f97316"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                        <div><span class="settings-label">Force Upload</span><span class="settings-desc">Lokale Daten hochladen</span></div>
+                    </div>
+                    <span class="settings-value">↑</span>
+                </div>
+                <div class="settings-item" onclick="syncAllToNotion()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(255,255,255,.1)"><svg viewBox="0 0 24 24" style="stroke:#fff"><path d="M4 4h16v16H4z" fill="none"/><path d="M8 8v8M12 8v8M16 8v8"/></svg></div>
+                        <div><span class="settings-label">Notion Export</span><span class="settings-desc">Buchungen exportieren</span></div>
+                    </div>
+                    <span class="settings-value" id="notionStatus">→</span>
+                </div>
+                <div class="settings-item" onclick="exportCSV()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(168,85,247,.15)"><svg viewBox="0 0 24 24" style="stroke:#a855f7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                        <div><span class="settings-label">CSV Export</span><span class="settings-desc">Daten für Excel</span></div>
+                    </div>
+                    <span class="settings-value">↓</span>
+                </div>
+                <div class="settings-item" onclick="setFlightApiKey()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(59,130,246,.15)"><svg viewBox="0 0 24 24" style="stroke:#3b82f6;fill:none;stroke-width:2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+                        <div><span class="settings-label">Flight Tracking</span><span class="settings-desc">AviationStack API Key</span></div>
+                    </div>
+                    <span class="settings-value" id="flightApiStatus">—</span>
+                </div>
+            </div>
+            <!-- Advanced Tools Submenu -->
+            <div class="settings-card" style="margin-top:8px">
+                <div class="settings-item" onclick="checkDuplicates()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(239,68,68,.15)"><svg viewBox="0 0 24 24" style="stroke:#ef4444"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg></div>
+                        <div><span class="settings-label">Duplikate prüfen</span><span class="settings-desc">Doppelte Clients mergen</span></div>
+                    </div>
+                    <span class="settings-value">🔧</span>
+                </div>
+                <div class="settings-item" onclick="repairNames()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(234,179,8,.15)"><svg viewBox="0 0 24 24" style="stroke:#eab308"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+                        <div><span class="settings-label">Namen reparieren</span><span class="settings-desc">Buchungen abgleichen</span></div>
+                    </div>
+                    <span class="settings-value">🔧</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAPIERKORB & SICHERHEIT (collapsed) -->
+        <div class="settings-section collapsed" id="trashSecuritySection">
+            <div class="settings-title" onclick="toggleSettingsSection('trashSecuritySection')">🛡️ Papierkorb & Sicherheit <span class="collapse-icon">▼</span></div>
+            <div class="settings-card">
+                <div class="settings-item" onclick="openTrash()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(239,68,68,.15)"><svg viewBox="0 0 24 24" style="stroke:#ef4444"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></div>
+                        <div><span class="settings-label">Papierkorb</span><span class="settings-desc">Gelöschte Einträge (30 Tage)</span></div>
+                    </div>
+                    <span class="settings-value" id="trashBadge" style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;display:none">0</span>
+                </div>
+                <div class="settings-item" onclick="toggleAppLock()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(201,162,39,.15)"><svg viewBox="0 0 24 24" style="stroke:#c9a227"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                        <div><span class="settings-label">App-Sperre</span><span class="settings-desc">Face ID / Passkey</span></div>
+                    </div>
+                    <div class="toggle-switch" id="lockToggle"></div>
+                </div>
+                <div class="settings-item" id="setupPasskeyItem" style="display:none" onclick="setupPasskey()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(34,197,94,.15)"><svg viewBox="0 0 24 24" style="stroke:#22c55e"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19c0-2.21 1.79-4 4-4h2c2.21 0 4 1.79 4 4v1.662"/></svg></div>
+                        <div><span class="settings-label">Passkey einrichten</span><span class="settings-desc">Face ID konfigurieren</span></div>
+                    </div>
+                    <span class="settings-value">+</span>
+                </div>
+                <div class="settings-item" id="resetPasskeyItem" style="display:none" onclick="resetPasskey()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(239,68,68,.15)"><svg viewBox="0 0 24 24" style="stroke:#ef4444"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+                        <div><span class="settings-label">Passkey zurücksetzen</span><span class="settings-desc">Neu einrichten</span></div>
+                    </div>
+                    <span class="settings-value">×</span>
+                </div>
+                <!-- Language Setting -->
+                <div class="settings-item" onclick="openLanguageModal()">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(59,130,246,.15)"><svg viewBox="0 0 24 24" style="stroke:#3b82f6;fill:none;stroke-width:2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                        <div><span class="settings-label" data-i18n="language">Sprache</span><span class="settings-desc" data-i18n="chooseLanguage">App-Sprache wählen</span></div>
+                    </div>
+                    <span class="settings-value" id="currentLangDisplay">DE</span>
+                </div>
+                <!-- Logout -->
+                <div class="settings-item" onclick="logoutTrainer()" style="border-top:1px solid #222;margin-top:8px;padding-top:16px">
+                    <div class="settings-left">
+                        <div class="settings-icon" style="background:rgba(239,68,68,.15)"><svg viewBox="0 0 24 24" style="stroke:#ef4444;fill:none;stroke-width:2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+                        <div><span class="settings-label">Abmelden</span><span class="settings-desc">Trainer wechseln</span></div>
+                    </div>
+                    <span class="settings-value">→</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding:20px 0;color:#52525b;font-size:11px;">
+            mōtus studio booking v1.0<br>
+            Made with ♥ for dance
+        </div>
+    </div>
+</div>
+
+
+<nav class="nav">
+    <div class="nav-item active" data-page="calendar" onclick="goHome()"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></div>
+    <div class="nav-item" data-page="clients" onclick="showPage('clients')"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Kunden</span></div>
+    <button class="nav-toggle" id="navToggle" onclick="toggleNavView()"><svg viewBox="0 0 24 24" width="26" height="26"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+    <div class="nav-item" data-page="stats" onclick="showPage('stats')"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Stats</span></div>
+    <div class="nav-item" data-page="settings" onclick="showPage('settings')" style="position:relative"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span><span class="nav-badge" id="navBadge" style="display:none"></span></div>
+</nav>
+</div>
+
+<!-- MODALS -->
+<!-- BOOKING MODAL v2 -->
+<div class="modal" id="bookingModal"><div class="modal-sheet"><div class="modal-handle"></div>
+<div class="modal-header-v2">
+    <div class="header-left">
+        <h2 id="bookingTitle">Neue Stunde</h2>
+        <div class="subtitle" id="bookingSubtitle"></div>
+    </div>
+    <div class="header-actions">
+        <button type="button" id="bookingShareBtn" style="display:none" title="Teilen" onclick="openShareModal()"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        <button type="button" id="dupBtn" style="display:none" title="Duplizieren" onclick="duplicateLesson()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="close-btn" onclick="closeModal('booking')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+</div>
+<form onsubmit="submitBooking(event)">
+<input type="hidden" id="editId">
+
+<!-- Client Hero Section -->
+<div class="client-hero" id="clientHeroSection">
+    <div class="client-avatar-large" id="bookingClientAvatar"></div>
+    <div class="client-details">
+        <input type="text" class="client-name-input" id="bClient" required autocomplete="off" oninput="showClientSuggestions();updateClientHero()" placeholder="Client Name">
+        <div class="autocomplete" id="clientAutocomplete"></div>
+        <div class="client-meta" id="bookingClientMeta">
+            <span id="bookingClientSessions"></span>
+            <span class="member-badge-text" id="bookingClientMember" style="display:none">★ Member</span>
+        </div>
+    </div>
+    <button type="button" class="client-edit-btn" id="bookingClientBtn" onclick="openClientFromBookingEdit()" style="display:none" title="Client bearbeiten">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+</div>
+
+<!-- Date/Time Row -->
+<div class="datetime-row-v2">
+    <div class="input-group-v2">
+        <label>Datum</label>
+        <input type="date" id="bDate" required onchange="updateTravelPriceField();updateBookingSubtitle()">
+    </div>
+    <div class="input-group-v2">
+        <label>Zeit</label>
+        <input type="time" id="bTime" required>
+    </div>
+</div>
+
+<!-- Duration Section -->
+<div class="duration-section-v2">
+    <div class="section-label-v2">Dauer & Preis</div>
+    <div class="duration-btns-v2" id="durBtns"></div>
+</div>
+
+<!-- Travel Price Section -->
+<div class="travel-section-v2" id="travelPriceWrap" style="display:none">
+    <div class="travel-header">
+        <span class="travel-flag" id="travelFlag">🌍</span>
+        <span class="travel-label" id="travelPriceLabel">Reisepreis</span>
+    </div>
+    <input type="number" class="travel-input" id="bTravelPrice" placeholder="€ pro 45min" oninput="renderDurBtns()">
+    <div class="travel-actions">
+        <button type="button" class="travel-btn" onclick="applyPriceToday()">📅 Auf heute anwenden</button>
+        <button type="button" class="travel-btn" onclick="openPriceRangeModal()">📆 Zeitraum...</button>
+    </div>
+</div>
+
+<!-- Advanced Options (collapsible) -->
+<div class="advanced-section-v2" id="advancedSection">
+    <div class="advanced-header" onclick="toggleAdvancedSection()">
+        <span class="advanced-title">Erweiterte Optionen</span>
+        <span class="advanced-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+    </div>
+    <div class="advanced-content">
+        <!-- Recurring -->
+        <div class="toggle-row-v2" id="recurringWrap" style="display:none">
+            <div class="toggle-label-v2"><span class="icon">🔄</span> Wiederholen</div>
+            <div class="toggle-switch-v2" id="recurringToggle" onclick="toggleRecurring()"></div>
+        </div>
+        <div class="recurring-opts" id="recurringOpts" style="display:none;padding:12px 0">
+            <select class="form-input" id="recurringType" style="margin-bottom:8px"><option value="weekly">Wöchentlich</option><option value="biweekly">Alle 2 Wochen</option></select>
+            <select class="form-input" id="recurringCount"><option value="4">4 Wochen</option><option value="8">8 Wochen</option><option value="12">12 Wochen</option></select>
+        </div>
+
+        <!-- Block -->
+        <div class="toggle-row-v2" id="blockToggleWrap">
+            <div class="toggle-label-v2"><span class="icon">👥</span> Saal blockieren</div>
+            <div class="toggle-switch-v2" id="blockToggle" onclick="toggleBlockMode()"></div>
+        </div>
+        <div class="block-name-wrap" id="blockNameWrap" style="display:none;padding:12px 0">
+            <input type="text" class="form-input" id="bBlockName" placeholder="z.B. Gruppe, Practice..." style="margin-bottom:8px">
+            <select class="form-input" id="bBlockTrainer"></select>
+            <p style="font-size:11px;color:#71717a;margin-top:6px">Trainer = zählt als Einheiten · Kein Trainer = nur blockiert</p>
+            <div id="campParticipantsInModal" style="display:none;margin-top:12px;padding:12px;background:#1a1a1a;border-radius:8px"><div style="font-weight:600;color:#c9a227;margin-bottom:8px">👫 Camp Teilnehmer</div><div id="campParticipantsList"></div></div>
+        </div>
+
+        <!-- Pause -->
+        <div class="toggle-row-v2" id="pauseToggleWrap">
+            <div class="toggle-label-v2"><span class="icon">☕</span> Pause</div>
+            <div class="toggle-switch-v2" id="pauseToggle" onclick="togglePauseMode()"></div>
+        </div>
+        <div class="pause-name-wrap" id="pauseNameWrap" style="display:none;padding:12px 0">
+            <input type="text" class="form-input" id="bPauseName" placeholder="z.B. Mittagspause, Kaffeepause..." style="margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><input type="checkbox" id="pauseForAll" onchange="togglePauseForAll()" style="width:18px;height:18px;accent-color:#60a5fa;"><label for="pauseForAll" style="font-size:13px;color:#a1a1aa;">Für alle Trainer</label></div>
+            <select class="form-input" id="bPauseTrainer"></select>
+        </div>
+    </div>
+</div>
+
+<!-- Notes -->
+<div class="notes-section-v2">
+    <textarea class="notes-input-v2" id="bNotes" rows="2" placeholder="+ Notizen hinzufügen..."></textarea>
+</div>
+
+<!-- Submit -->
+<button type="submit" class="submit-btn-v2" id="bookBtn">Buchen</button>
+
+<!-- Delete Link -->
+<button type="button" class="delete-link-v2" id="delBtn" onclick="delLesson()" style="display:none">Stunde löschen</button>
+</form></div></div>
+
+<div class="modal" id="priceRangeModal" onclick="if(event.target===this)closeModal('priceRange')"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-header"><h3 class="modal-title">Preis auf Zeitraum anwenden</h3><button class="modal-close" onclick="closeModal('priceRange')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="form-group"><label class="form-label">Von</label><input type="date" class="form-input" id="priceRangeFrom"></div><div class="form-group"><label class="form-label">Bis</label><input type="date" class="form-input" id="priceRangeTo"></div><div class="form-group" id="priceRangePreview" style="padding:12px;background:#1a1a1a;border-radius:8px;font-size:13px;color:#a1a1aa"></div><button type="button" class="btn btn-primary" onclick="applyPriceRange()" style="width:100%">Preis anwenden</button></div></div>
+
+<div class="modal" id="successModal" onclick="if(event.target===this)this.classList.remove('open')"><div class="modal-sheet" style="position:relative"><div class="modal-handle"></div><div class="modal-header"><div></div><div style="display:flex;gap:8px;align-items:center"><button class="modal-close modal-btn-share" title="Teilen" onclick="openShareModal()"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button><button class="modal-close" onclick="closeModal('success')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div><div class="success-content"><div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><h2 class="success-title">Gebucht!</h2><p class="success-sub" id="successSub"></p><div class="success-details" id="successDetails"></div></div></div></div>
+
+<div class="modal" id="shareModal" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="modal-sheet share-modal">
+<div class="modal-handle"></div>
+<div class="share-header">
+    <div class="share-header-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </div>
+    <h3>Termine teilen</h3>
+    <div class="share-lang-switch">
+        <button class="share-lang-btn active" data-lang="de" onclick="setShareLang('de')">🇩🇪</button>
+        <button class="share-lang-btn" data-lang="en" onclick="setShareLang('en')">🇬🇧</button>
+    </div>
+    <button class="qr-close-btn" onclick="closeModal('share')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+
+<div class="share-content">
+<div class="share-section">
+    <label class="share-label">Trainer</label>
+    <div id="shareTrainerBtns" class="share-trainers"></div>
+</div>
+
+<div class="share-section">
+    <label class="share-label">Termine</label>
+    <div class="share-lessons" id="shareLessonsList"></div>
+</div>
+
+<div class="share-msg-box">
+    <div class="share-msg-header">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span>Nachricht für deinen Kunden</span>
+    </div>
+    <p id="sharePreview" class="share-msg-content"></p>
+</div>
+
+<div class="share-actions">
+    <button class="share-copy-btn" onclick="copyShareText()">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Kopieren</span>
+    </button>
+    <a id="shareWaBtn" href="#" target="_blank" class="share-wa-btn">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        <span>WhatsApp</span>
+    </a>
+</div>
+</div>
+</div></div>
+
+<div class="modal" id="guestShareModal" onclick="if(event.target===this)this.classList.remove('open')"><div class="modal-sheet" style="max-width:380px">
+<div class="modal-handle"></div>
+<div class="modal-header">
+    <h3 class="modal-title" id="guestShareTitle">Abrechnung</h3>
+    <button class="modal-close" onclick="closeModal('guestShare')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+</div>
+
+<!-- Logo wie App -->
+<div style="text-align:center;padding:8px 0 16px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:16px">
+    <div style="font-size:22px;font-weight:300;color:#fff;letter-spacing:1px">mōtus studio</div>
+    <div style="font-size:10px;letter-spacing:3px;color:#c9a227;margin-top:2px">BOOKING</div>
+</div>
+
+<!-- Language Toggle -->
+<div class="share-lang" style="justify-content:center;margin-bottom:16px">
+    <button class="lang-btn active" data-lang="de" onclick="setGuestShareLang('de')"><span class="flag">🇩🇪</span></button>
+    <button class="lang-btn" data-lang="en" onclick="setGuestShareLang('en')"><span class="flag">🇬🇧</span></button>
+</div>
+
+<!-- Text Preview -->
+<div class="share-preview" id="guestSharePreview" style="max-height:none;margin-bottom:16px"></div>
+
+<!-- Action Buttons -->
+<div class="share-actions">
+    <a id="guestShareWaBtn" href="#" target="_blank" class="btn btn-primary" style="background:#25D366;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:#fff;stroke:none;margin-right:8px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+    </a>
+    <button class="btn btn-secondary" onclick="copyGuestShareText()">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;margin-right:8px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Kopieren
+    </button>
+</div>
+</div></div>
+
+<!-- Share Modal (einheitlich für alle Links) -->
+<div class="modal" id="shareModal2" onclick="if(event.target===this)closeShareModal()">
+<div class="modal-sheet qr-modal">
+<div class="modal-handle"></div>
+<div class="qr-modal-header">
+    <div class="qr-modal-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+    </div>
+    <h3 id="shareTitle">Teilen</h3>
+    <button class="qr-close-btn" onclick="closeShareModal()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+<div class="qr-code-container">
+    <div class="qr-code-frame">
+        <div class="qr-corner qr-corner-tl"></div>
+        <div class="qr-corner qr-corner-tr"></div>
+        <div class="qr-corner qr-corner-bl"></div>
+        <div class="qr-corner qr-corner-br"></div>
+        <div id="shareQrCode" class="qr-code-inner"></div>
+    </div>
+</div>
+<div class="qr-url-display">
+    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <span id="shareLinkText"></span>
+</div>
+<div class="qr-actions">
+    <button class="qr-action-btn" onclick="copyShareLink()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+        <span>Kopieren</span>
+    </button>
+    <button class="qr-action-btn qr-action-wa" onclick="shareViaWhatsApp()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></div>
+        <span>WhatsApp</span>
+    </button>
+    <button class="qr-action-btn" onclick="openShareLink()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <span>Öffnen</span>
+    </button>
+    <button class="qr-action-btn qr-action-close" onclick="closeShareModal()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+        <span>Schließen</span>
+    </button>
+</div>
+</div>
+</div>
+
+<!-- CLIENT MODAL v2 -->
+<div class="modal" id="clientModal"><div class="modal-sheet"><div class="modal-handle"></div>
+<div class="modal-header-v2">
+    <div class="header-left">
+        <h2>Kunde</h2>
+        <div class="subtitle">bearbeiten</div>
+    </div>
+    <div class="header-actions">
+        <button type="button" id="clientShareBtn" onclick="openClientShare()" style="display:none" title="Teilen"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        <button class="close-btn" onclick="closeModal('client')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+</div>
+<form onsubmit="saveClient(event)">
+<input type="hidden" id="cId">
+
+<!-- Photo + Name Hero -->
+<div class="client-hero client-hero-centered">
+    <div class="client-avatar-large" id="photoPreview" onclick="document.getElementById('photoInput').click()">
+        <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#fff;fill:none;stroke-width:1.5;opacity:0.5" id="clientPhotoIcon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+    <input type="text" class="client-name-input" id="cName" required placeholder="Name eingeben">
+    <div class="client-meta">
+        <span class="member-badge-text" id="clientMemberBadge" style="display:none">★ Member</span>
+    </div>
+    <span class="photo-btn" id="delPhotoBtn" onclick="deletePhoto()" style="display:none;background:rgba(239,68,68,.15);color:#ef4444;padding:6px 12px;border-radius:8px;margin-top:8px;cursor:pointer">× Foto löschen</span>
+</div>
+
+<!-- Email -->
+<div class="input-group-v2" style="padding:0 20px;margin-bottom:12px">
+    <label>Email</label>
+    <input type="email" id="cEmail" placeholder="email@beispiel.com">
+</div>
+
+<!-- Phone Numbers -->
+<div class="datetime-row-v2">
+    <div class="input-group-v2">
+        <label>Telefon</label>
+        <input type="tel" id="cPhone1" placeholder="+43 660...">
+    </div>
+    <div class="input-group-v2">
+        <label>Partner Telefon</label>
+        <input type="tel" id="cPhone2" placeholder="Optional">
+    </div>
+</div>
+
+<!-- Partner Name -->
+<div class="input-group-v2" style="padding:0 20px;margin-bottom:12px">
+    <label>Partner Name</label>
+    <input type="text" id="cPartner" placeholder="Optional">
+</div>
+
+<!-- Notes -->
+<div class="notes-section-v2">
+    <textarea class="notes-input-v2" id="cNotes" rows="2" placeholder="+ Notizen hinzufügen..."></textarea>
+</div>
+
+<!-- Member Toggle -->
+<div class="member-toggle-v2">
+    <div class="toggle-label-v2"><span class="icon">★</span> Studio Member</div>
+    <div class="toggle-switch-v2" id="memberToggle" onclick="this.classList.toggle('active');updateClientMemberBadge()"></div>
+</div>
+
+<!-- Stats Box -->
+<div class="stats-box-v2" id="clientStats"></div>
+
+<!-- History -->
+<div class="client-history" id="clientHistory"></div>
+
+<!-- Submit -->
+<button type="submit" class="submit-btn-v2">Speichern</button>
+
+<!-- Delete Link -->
+<button type="button" class="delete-link-v2" id="delClientBtn" onclick="deleteClient()" style="display:none">Kunde löschen</button>
+</form></div></div>
+
+<div class="modal" id="pricesModal"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-header"><h3 class="modal-title">Preise</h3><button class="modal-close" onclick="closeModal('prices')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><form onsubmit="savePrices(event)"><div class="form-group"><label class="form-label">45 Min Normal (€)</label><input type="number" class="form-input" id="price45"></div><div class="form-group"><label class="form-label">45 Min Member (€)</label><input type="number" class="form-input" id="priceMember45"></div><p style="font-size:13px;color:#71717a;margin:8px 0 16px;">90 Min = 2× den 45 Min Preis</p><button type="submit" class="btn btn-primary">Speichern</button></form></div></div>
+
+<div class="modal" id="hoursModal"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-header"><h3 class="modal-title">Hours</h3><button class="modal-close" onclick="closeModal('hours')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><form onsubmit="saveHours(event)"><div class="form-row"><div class="form-group"><label class="form-label">Start</label><input type="number" class="form-input" id="startHour" min="6" max="12"></div><div class="form-group"><label class="form-label">End</label><input type="number" class="form-input" id="endHour" min="17" max="23"></div></div><button type="submit" class="btn btn-primary">Save</button></form></div></div>
+
+<div class="modal" id="campModal"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-header"><h3 class="modal-title">Camp Einstellungen</h3><button class="modal-close" onclick="closeModal('camp')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><form onsubmit="saveCampSettings(event)"><div class="form-group"><label class="form-label">Camp Name</label><input type="text" class="form-input" id="campName" placeholder="z.B. Winter Camp 2025"></div><p style="font-size:12px;color:#a1a1aa;margin:16px 0 12px;">Nur diese Tage werden in der Community App angezeigt.</p><div class="form-row"><div class="form-group"><label class="form-label">Start Datum</label><input type="date" class="form-input" id="campStart"></div><div class="form-group"><label class="form-label">End Datum</label><input type="date" class="form-input" id="campEnd"></div></div><div class="form-group" style="margin-top:8px"><button type="button" class="btn" style="background:#333;width:100%" onclick="clearCampDates()">Zeitraum löschen</button></div><button type="submit" class="btn btn-primary">Speichern</button></form></div></div>
+
+<div class="modal" id="customRangeModal"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-header"><h3 class="modal-title">Zeitraum wählen</h3><button class="modal-close" onclick="closeModal('customRange')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><form onsubmit="applyCustomRange(event)"><div class="form-row"><div class="form-group"><label class="form-label">Von</label><input type="date" class="form-input" id="customStart" required></div><div class="form-group"><label class="form-label">Bis</label><input type="date" class="form-input" id="customEnd" required></div></div><button type="submit" class="btn btn-primary">Anwenden</button></form></div></div>
+
+<div class="modal" id="guestTrainerModal"><div class="modal-sheet"><div class="modal-handle"></div><div class="modal-header"><h3 class="modal-title" id="guestTrainerTitle">Neuer Gasttrainer</h3><div style="display:flex;gap:8px;align-items:center;"><button type="button" class="modal-close modal-btn-delete" id="delGuestTrainerBtn" onclick="deleteGuestTrainer()" style="display:none;" title="Löschen"><svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button><button class="modal-close" onclick="closeModal('guestTrainer')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
+<form onsubmit="saveGuestTrainer(event)">
+<input type="hidden" id="gtId">
+<!-- Profile Section (always visible) -->
+<div class="photo-upload"><div class="photo-preview" id="gtPhotoPreview" onclick="document.getElementById('gtPhotoInput').click()"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div><span class="photo-btn" onclick="document.getElementById('gtPhotoInput').click()">+ Foto</span><span class="photo-btn" id="delGtPhotoBtn" onclick="deleteGtPhoto()" style="display:none;background:#331111;color:#ff6b6b;">× Löschen</span><input type="file" id="gtPhotoInput" accept="image/*" style="display:none" onchange="handleGtPhoto(event)"></div>
+<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="gtName" required placeholder="z.B. Maria"></div>
+<div class="form-group"><label class="form-label">Farbe</label><div class="color-picker" id="gtColorPicker"><button type="button" class="color-btn" data-color="#8B5CF6" style="background:#8B5CF6" onclick="selectGuestColor('#8B5CF6')"></button><button type="button" class="color-btn" data-color="#EC4899" style="background:#EC4899" onclick="selectGuestColor('#EC4899')"></button><button type="button" class="color-btn" data-color="#F97316" style="background:#F97316" onclick="selectGuestColor('#F97316')"></button><button type="button" class="color-btn" data-color="#14B8A6" style="background:#14B8A6" onclick="selectGuestColor('#14B8A6')"></button><button type="button" class="color-btn" data-color="#6366F1" style="background:#6366F1" onclick="selectGuestColor('#6366F1')"></button></div></div>
+<input type="hidden" id="gtColor" value="#8B5CF6">
+<!-- Zeitraum Accordion -->
+<div class="gt-accordion open" id="gtZeitraumAccordion">
+<div class="gt-accordion-header" onclick="toggleGtAccordion('gtZeitraumAccordion')">
+<div class="gt-accordion-left"><span>📅</span><span class="gt-accordion-title">Zeitraum</span></div>
+<span class="gt-accordion-summary" id="gtZeitraumSummary">—</span>
+<span class="gt-accordion-chevron">▼</span>
+</div>
+<div class="gt-accordion-content">
+<div class="form-row"><div class="form-group"><label class="form-label">Von</label><input type="date" class="form-input" id="gtStartDate" onchange="updateGtZeitraumSummary()"></div><div class="form-group"><label class="form-label">Bis</label><input type="date" class="form-input" id="gtEndDate" onchange="updateGtZeitraumSummary()"></div></div>
+</div>
+</div>
+<!-- Kontakt Accordion -->
+<div class="gt-accordion" id="gtKontaktAccordion">
+<div class="gt-accordion-header" onclick="toggleGtAccordion('gtKontaktAccordion')">
+<div class="gt-accordion-left"><span>📱</span><span class="gt-accordion-title">Kontakt</span></div>
+<span class="gt-accordion-summary" id="gtKontaktSummary">—</span>
+<span class="gt-accordion-chevron">▼</span>
+</div>
+<div class="gt-accordion-content">
+<div class="form-row"><div class="form-group"><label class="form-label">Telefon</label><input type="tel" class="form-input" id="gtPhone" placeholder="+49 123..." onchange="updateGtKontaktSummary()"></div><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="gtEmail" placeholder="trainer@email.com" onchange="updateGtKontaktSummary()"></div></div>
+</div>
+</div>
+<!-- Preise Accordion -->
+<div class="gt-accordion" id="gtPreiseAccordion">
+<div class="gt-accordion-header" onclick="toggleGtAccordion('gtPreiseAccordion')">
+<div class="gt-accordion-left"><span>💰</span><span class="gt-accordion-title">Preise</span></div>
+<span class="gt-accordion-summary" id="gtPreiseSummary">—</span>
+<span class="gt-accordion-chevron">▼</span>
+</div>
+<div class="gt-accordion-content">
+<p style="font-size:11px;color:#888;margin-bottom:10px;">Verkaufspreis (Client zahlt)</p>
+<div class="form-row"><div class="form-group"><label class="form-label">45 Min Normal (€)</label><input type="number" class="form-input" id="gtSalePrice45" required placeholder="100" onchange="updateGtPreiseSummary()"></div><div class="form-group"><label class="form-label">45 Min Member (€)</label><input type="number" class="form-input" id="gtSaleMember45" required placeholder="80" onchange="updateGtPreiseSummary()"></div></div>
+<p style="font-size:11px;color:#888;margin:12px 0 10px;padding-top:10px;border-top:1px solid #333;">Auszahlung (Trainer bekommt)</p>
+<div class="form-row"><div class="form-group"><label class="form-label">45 Min Normal (€)</label><input type="number" class="form-input" id="gtPayoutPrice45" required placeholder="80" onchange="updateGtPreiseSummary()"></div><div class="form-group"><label class="form-label">45 Min Member (€)</label><input type="number" class="form-input" id="gtPayoutMember45" required placeholder="65" onchange="updateGtPreiseSummary()"></div></div>
+<div class="form-row"><div class="form-group"><label class="form-label">🎓 Lecture (€)</label><input type="number" class="form-input" id="gtPayoutLecture" placeholder="50" onchange="updateGtPreiseSummary()"></div><div class="form-group"></div></div>
+<p style="font-size:11px;color:#555;margin-top:8px;">90 Min = 2× den 45 Min Preis</p>
+</div>
+</div>
+<!-- Collapsible Travel Section -->
+<div class="travel-accordion" id="gtTravelAccordion">
+<div class="travel-accordion-header" onclick="toggleTravelAccordion()">
+<div class="travel-accordion-left"><span class="travel-accordion-icon">✈️</span><span class="travel-accordion-title">Reise & Kosten</span></div>
+<div class="travel-accordion-summary" id="gtTravelSummary"><span class="travel-tag" id="gtSummaryTag">—</span><span id="gtSummaryDates">Keine Daten</span><span class="travel-total" id="gtSummaryTotal">€0</span></div>
+<span class="travel-accordion-chevron" id="gtChevron">▼</span>
+</div>
+<div class="travel-accordion-content" id="gtTravelContent">
+<div class="travel-timeline">
+<div class="travel-timeline-line"></div>
+<!-- Arrival -->
+<div class="travel-timeline-item arrival">
+<div class="travel-timeline-dot arrival"></div>
+<div class="travel-timeline-header"><span class="travel-timeline-label arrival">🛬 Anreise</span><input type="date" class="travel-date-input" id="gtArrivalDate" onchange="updateTravelSummary()"></div>
+<div class="travel-timeline-row">
+<div class="travel-type-mini"><button type="button" class="travel-type-mini-btn" data-trip="arrival" data-type="car" onclick="selectTripType('arrival','car')">🚗</button><button type="button" class="travel-type-mini-btn" data-trip="arrival" data-type="train" onclick="selectTripType('arrival','train')">🚆</button><button type="button" class="travel-type-mini-btn" data-trip="arrival" data-type="flight" onclick="selectTripType('arrival','flight')">✈️</button></div>
+<input type="text" class="travel-flight-input" id="gtArrivalFlight" placeholder="z.B. LH1418" onchange="updateTravelSummary()">
+<button type="button" class="flight-track-btn" onclick="trackFlight('arrival')" title="Flug tracken">📡</button>
+</div>
+<div class="flight-status-display" id="arrivalFlightStatus"></div>
+</div>
+<!-- Departure -->
+<div class="travel-timeline-item departure">
+<div class="travel-timeline-dot departure"></div>
+<div class="travel-timeline-header"><span class="travel-timeline-label departure">🛫 Abreise</span><input type="date" class="travel-date-input" id="gtDepartureDate" onchange="updateTravelSummary()"></div>
+<div class="travel-timeline-row">
+<div class="travel-type-mini"><button type="button" class="travel-type-mini-btn" data-trip="departure" data-type="car" onclick="selectTripType('departure','car')">🚗</button><button type="button" class="travel-type-mini-btn" data-trip="departure" data-type="train" onclick="selectTripType('departure','train')">🚆</button><button type="button" class="travel-type-mini-btn" data-trip="departure" data-type="flight" onclick="selectTripType('departure','flight')">✈️</button></div>
+<input type="text" class="travel-flight-input" id="gtDepartureFlight" placeholder="z.B. LH1418">
+<button type="button" class="flight-track-btn" onclick="trackFlight('departure')" title="Flug tracken">📡</button>
+</div>
+<div class="flight-status-display" id="departureFlightStatus"></div>
+</div>
+</div>
+<!-- Costs Grid -->
+<div class="travel-costs-grid">
+<div class="travel-cost-box highlight"><div class="travel-cost-label">REISE</div><input type="number" class="travel-cost-input highlight" id="gtTravelCost" placeholder="0" onchange="updateTravelSummary()"><div class="travel-cost-hint">Trainer</div></div>
+<div class="travel-cost-box"><div class="travel-cost-label">HOTEL</div><input type="number" class="travel-cost-input" id="gtHotelCost" placeholder="0" onchange="updateTravelSummary()"><div class="travel-cost-hint">Studio</div></div>
+<div class="travel-cost-box"><div class="travel-cost-label">SONST.</div><input type="number" class="travel-cost-input" id="gtOtherCost" placeholder="0" onchange="updateTravelSummary()"><div class="travel-cost-hint">Optional</div></div>
+</div>
+</div>
+</div>
+<input type="hidden" id="gtArrivalType">
+<input type="hidden" id="gtDepartureType">
+<button type="submit" class="btn btn-primary">Speichern</button>
+</form></div></div>
+
+<div class="modal" id="trainerEditModal" onclick="if(event.target===this)this.classList.remove('open')"><div class="modal-sheet" style="max-width:340px">
+<div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title" id="trainerEditTitle">Trainer bearbeiten</h3><button class="modal-close" onclick="closeModal('trainerEdit')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<input type="hidden" id="teId">
+<div class="photo-upload"><div class="photo-preview" id="tePhotoPreview" onclick="document.getElementById('tePhotoInput').click()"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div><span class="photo-btn" onclick="document.getElementById('tePhotoInput').click()">+ Foto</span><span class="photo-btn" id="delTePhotoBtn" onclick="deleteTePhoto()" style="display:none;background:#331111;color:#ff6b6b;">× Löschen</span><input type="file" id="tePhotoInput" accept="image/*" style="display:none" onchange="handleTePhoto(event)"></div>
+<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="teName" disabled style="opacity:0.6"></div>
+<div class="form-group"><label class="form-label">Telefon</label><input type="tel" class="form-input" id="tePhone" placeholder="+49 123..."></div>
+<div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="teEmail" placeholder="email@example.com"></div>
+<button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="saveTrainerEdit()">Speichern</button>
+</div></div>
+
+<div class="modal" id="locationModal"><div class="modal-sheet" style="max-width:320px"><div class="modal-handle"></div><h3 style="margin:0 0 12px;font-size:15px">📍 Location für diesen Tag</h3><div id="locationList" style="max-height:300px;overflow-y:auto"></div><button class="btn btn-secondary" style="width:100%;margin-top:10px;padding:10px;font-size:12px" onclick="closeModal('location');openNewLocation();">+ Neue Location</button></div></div>
+
+<div class="modal" id="newLocationModal"><div class="modal-sheet" style="max-width:380px">
+<div class="modal-handle"></div>
+<h3 id="newLocationTitle" style="margin:0 0 16px">Neuer Standort</h3>
+<div class="form-group" style="margin-bottom:12px"><label class="form-label">Stadt / Name</label><input type="text" class="form-input" id="locName" placeholder="z.B. Berlin" oninput="autoDetectFlag()"></div>
+<div class="form-group" style="margin-bottom:12px"><label class="form-label">Flagge wählen</label>
+<div id="flagPicker" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px"></div></div>
+<input type="hidden" id="locEmoji" value="🏠">
+<input type="hidden" id="locEditId" value="">
+<div style="display:flex;gap:8px;margin-top:16px">
+<button class="btn btn-secondary" style="flex:1" onclick="closeModal('newLocation')">Abbrechen</button>
+<button class="btn btn-primary" style="flex:1" onclick="saveLocation()">Speichern</button>
+</div>
+<button id="delLocBtn" class="btn" style="width:100%;margin-top:8px;background:#ef4444;border-color:#ef4444;display:none" onclick="deleteLocation()">Löschen</button>
+</div></div>
+
+<div class="modal" id="campRequestsModal" onclick="if(event.target===this)closeModal('campRequests')">
+<div class="modal-sheet anfragen-modal">
+<div class="modal-handle"></div>
+<div class="anfragen-header">
+    <div class="anfragen-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    </div>
+    <h3>Anfragen</h3>
+    <button class="qr-close-btn" onclick="closeModal('campRequests')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+<div id="campRequestsView" class="anfragen-content">
+    <div class="anfragen-input-section">
+        <label class="anfragen-label">Nachricht einfügen</label>
+        <textarea id="campMessageInput" class="anfragen-textarea" rows="4" placeholder="z.B.: Youngjin Couple&#10;Ksenia 8, Markus 9, Constantine 3&#10;2. - 16. Januar"></textarea>
+        <button class="anfragen-parse-btn" onclick="parseCampMessage()">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Parsen</span>
+        </button>
+    </div>
+    <div id="parsedResult" class="anfragen-parsed" style="display:none">
+        <div class="anfragen-parsed-header">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Erkannt</span>
+        </div>
+        <div id="parsedContent" class="anfragen-parsed-content"></div>
+        <button class="anfragen-save-btn" onclick="saveCampRequest()">
+            <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Request speichern</span>
+        </button>
+    </div>
+    <div class="anfragen-divider"></div>
+    <div class="anfragen-list-section">
+        <div class="anfragen-list-header">
+            <div class="anfragen-list-title">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <span>Gespeicherte Requests</span>
+            </div>
+            <span class="anfragen-count" id="campRequestsTotal">0</span>
+        </div>
+        <div id="campRequestsList" class="anfragen-list"></div>
+    </div>
+</div>
+</div></div>
+
+<div class="modal" id="campTrackerModal" onclick="if(event.target===this)closeModal('campTracker')"><div class="modal-sheet" style="max-width:600px;max-height:90vh">
+<div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title">📊 Camp Tracker</h3><button class="modal-close" onclick="closeModal('campTracker')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<p style="font-size:12px;color:#71717a;margin:0 0 16px" id="campTrackerPeriod"></p>
+<div id="campTrackerContent"></div>
+</div></div>
+
+<div class="modal" id="campPricingModal"><div class="modal-sheet"><div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title">Camp Preise</h3><button class="modal-close" onclick="closeModal('campPricing')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<form onsubmit="saveCampPricing(event)">
+<p style="font-size:14px;color:#a1a1aa;margin-bottom:16px">Preise für die Camp Registration Page</p>
+<p style="font-size:12px;color:#c9a227;margin-bottom:8px;font-weight:600">Normalpreis</p>
+<div class="form-group"><label class="form-label">Ganzes Camp (EUR pro Person)</label><input type="number" class="form-input" id="campFullPrice" placeholder="z.B. 100"></div>
+<div class="form-group"><label class="form-label">Pro Tag (EUR pro Person)</label><input type="number" class="form-input" id="campDayPrice" placeholder="z.B. 15"></div>
+<p style="font-size:12px;color:#22c55e;margin:16px 0 8px;font-weight:600">★ Member Preis</p>
+<div class="form-group"><label class="form-label">Ganzes Camp Member (EUR pro Person)</label><input type="number" class="form-input" id="campFullMemberPrice" placeholder="z.B. 80"></div>
+<div class="form-group"><label class="form-label">Pro Tag Member (EUR pro Person)</label><input type="number" class="form-input" id="campDayMemberPrice" placeholder="z.B. 12"></div>
+<p style="font-size:13px;color:#71717a;margin:12px 0">Privatstunden-Preis wird aus den normalen Preis-Settings genommen.</p>
+<button type="submit" class="btn btn-primary">Speichern</button>
+</form>
+</div></div>
+
+<div class="modal" id="campRegsModal" onclick="if(event.target===this)closeModal('campRegs')">
+<div class="modal-sheet camp-modal">
+<div class="modal-handle"></div>
+<div class="camp-header">
+    <div class="camp-header-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <h3>Camp Übersicht</h3>
+    <button class="qr-close-btn" onclick="closeModal('campRegs')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+
+<div class="camp-content">
+<!-- Stats Overview -->
+<div class="camp-stats" id="campStats">
+    <div class="camp-stat">
+        <div class="camp-stat-value gold" id="statTotal">0</div>
+        <div class="camp-stat-label">Anmeldungen</div>
+    </div>
+    <div class="camp-stat">
+        <div class="camp-stat-value green" id="statPeople">0</div>
+        <div class="camp-stat-label">Personen</div>
+    </div>
+    <div class="camp-stat">
+        <div class="camp-stat-value blue" id="statUnits">0</div>
+        <div class="camp-stat-label">Einheiten</div>
+    </div>
+</div>
+
+<button class="camp-add-btn" onclick="showManualRegForm()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>Manuelle Anmeldung</span>
+</button>
+
+<!-- Trainer Summary -->
+<div id="trainerSummary" class="camp-trainer-summary"></div>
+
+<!-- Tabs -->
+<div class="camp-tabs">
+    <button class="camp-tab active" id="tabAll" onclick="showRegTab('all')">Alle</button>
+    <button class="camp-tab" id="tabPending" onclick="showRegTab('pending')">Offen</button>
+    <button class="camp-tab" id="tabDone" onclick="showRegTab('done')">Erledigt</button>
+</div>
+
+<div id="campRegsContent" class="camp-list">
+    <div class="camp-empty">Keine Anmeldungen vorhanden</div>
+</div>
+</div>
+
+<div class="camp-footer">
+    <button class="camp-close-btn" onclick="closeModal('campRegs')">
+        <span>Schließen</span>
+    </button>
+</div>
+</div></div>
+
+<!-- Manual Camp Registration Modal -->
+<div class="modal" id="manualRegModal" onclick="if(event.target===this)closeModal('manualReg')">
+<div class="modal-sheet" style="max-width:500px">
+<div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title">+ Manuelle Anmeldung</h3><button class="modal-close" onclick="closeModal('manualReg')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+    <div style="position:relative">
+        <label style="font-size:13px;color:#71717a;margin-bottom:4px;display:block">Name *</label>
+        <input type="text" id="manualRegName" placeholder="z.B. Max & Anna" oninput="showCampClientSuggestions()" autocomplete="off" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:14px">
+        <div id="clientSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#242424;border-radius:0 0 8px 8px;border:1px solid #333;border-top:none;max-height:150px;overflow-y:auto;z-index:10"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+            <label style="font-size:13px;color:#71717a;margin-bottom:4px;display:block">Typ</label>
+            <select id="manualRegType" onchange="calcManualRegPrice()" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:14px">
+                <option value="single">👤 Single</option>
+                <option value="couple">👫 Paar</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-size:13px;color:#71717a;margin-bottom:4px;display:block">Preis (€) * <span id="memberIndicator" style="display:none;color:#22c55e;font-weight:600">★ Member</span></label>
+            <input type="number" id="manualRegPrice" placeholder="0" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:14px">
+        </div>
+    </div>
+    <div>
+        <label style="font-size:13px;color:#71717a;margin-bottom:4px;display:block">Tage</label>
+        <select id="manualRegDays" onchange="toggleDayPicker()" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:14px">
+            <option value="full">Ganzes Camp</option>
+            <option value="partial">Einzelne Tage</option>
+        </select>
+        <div id="dayPickerContainer" style="display:none;margin-top:10px;background:#242424;border-radius:10px;padding:12px">
+            <div style="font-size:12px;color:#71717a;margin-bottom:8px">Tage auswählen:</div>
+            <div id="dayPickerDays" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+    </div>
+    <div>
+        <label style="font-size:13px;color:#71717a;margin-bottom:8px;display:block">Privatstunden (optional)</label>
+        <div id="manualRegTrainers" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button type="button" class="btn" style="width:100%;margin-top:8px;background:#242424;padding:10px" onclick="addManualRegTrainer()">+ Trainer hinzufügen</button>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:14px;margin-top:8px" onclick="saveManualReg()">Anmeldung speichern</button>
+</div>
+</div>
+</div>
+
+<!-- Share Availability Modal -->
+<div class="modal" id="shareAvailModal" onclick="if(event.target===this)closeModal('shareAvail')">
+<div class="modal-sheet share-modal">
+<div class="modal-handle"></div>
+<div class="share-header">
+    <div class="share-header-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </div>
+    <h3>Verfügbarkeit teilen</h3>
+    <div class="share-lang-switch">
+        <button class="share-lang-btn active" data-lang="de" onclick="setShareAvailLang('de')">🇩🇪</button>
+        <button class="share-lang-btn" data-lang="en" onclick="setShareAvailLang('en')">🇬🇧</button>
+    </div>
+    <button class="qr-close-btn" onclick="closeModal('shareAvail')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+
+<div class="share-content">
+<div class="share-intro">
+    <p>Erstelle einen personalisierten Buchungslink für deinen Kunden. Er kann dann selbst verfügbare Termine einsehen und direkt buchen.</p>
+</div>
+
+<div class="share-hint">
+    <svg viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <span>Tippe auf Tage um sie auszuwählen</span>
+</div>
+
+<div class="share-calendar">
+    <div class="share-cal-header">
+        <button class="share-cal-nav" onclick="navShareCal(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span id="shareCalTitle" class="share-cal-title">Dezember 2024</span>
+        <button class="share-cal-nav" onclick="navShareCal(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+    <div class="share-cal-weekdays"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+    <div id="shareCalDays" class="share-cal-days"></div>
+</div>
+
+<div class="share-section">
+    <label class="share-label">Ausgewählte Tage</label>
+    <div id="shareAvailDays" class="share-selected-days">
+        <span class="share-no-selection">Keine Tage ausgewählt</span>
+    </div>
+</div>
+
+<div class="share-section">
+    <label class="share-label">Trainer</label>
+    <div id="shareAvailTrainers" class="share-trainers"></div>
+</div>
+
+<div id="shareAvailLinkBox" class="share-link-box" style="display:none">
+    <div class="share-link-header">
+        <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        <span>Link erstellt</span>
+        <button class="copy-link-btn" onclick="copyAvailLink()" title="Link kopieren">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+    </div>
+    <p id="shareAvailLinkText" class="share-link-url"></p>
+    <div class="share-link-validity">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Gültig für 3 Tage</span>
+    </div>
+</div>
+
+<div id="shareAvailMsgBox" class="share-msg-box" style="display:none">
+    <div class="share-msg-header">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span>Nachricht für deinen Kunden</span>
+    </div>
+    <p id="shareAvailMsgText" class="share-msg-content"></p>
+</div>
+
+<div class="share-actions">
+    <button class="share-gen-btn" id="shareAvailGenBtn" onclick="generateAvailLink()">
+        <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        <span>Link erstellen</span>
+    </button>
+    <button class="share-copy-btn" id="shareAvailCopyBtn" onclick="copyAvailLink()" style="display:none">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Kopieren</span>
+    </button>
+    <button class="share-wa-btn" id="shareAvailWaBtn" onclick="shareAvailWhatsApp()" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        <span>WhatsApp</span>
+    </button>
+</div>
+
+<div class="share-customer-info">
+    <div class="share-info-title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Was bekommt dein Kunde?</span>
+    </div>
+    <ul class="share-info-list">
+        <li>Übersicht aller verfügbaren Termine für die gewählten Tage</li>
+        <li>Einfache Auswahl und Buchung mit einem Klick</li>
+        <li>Automatische Bestätigung per WhatsApp oder E-Mail</li>
+        <li>Der Link ist 3 Tage gültig und kann mehrfach verwendet werden</li>
+    </ul>
+</div>
+</div>
+</div></div>
+
+<!-- Booking Requests Modal -->
+<div class="modal" id="bookingRequestsModal" onclick="if(event.target===this)closeModal('bookingRequests')">
+<div class="modal-sheet" style="max-width:450px;max-height:85vh">
+<div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title">📥 Buchungsanfragen</h3><button class="modal-close" onclick="closeModal('bookingRequests')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<div id="bookingRequestsList" style="max-height:60vh;overflow-y:auto">
+<div style="text-align:center;padding:30px;color:#71717a">Keine Anfragen</div>
+</div>
+</div></div>
+
+<!-- Papierkorb Modal -->
+<div class="modal" id="trashModal" onclick="if(event.target===this)closeModal('trash')">
+<div class="modal-sheet" style="max-width:450px;max-height:85vh">
+<div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title">🗑️ Papierkorb</h3><button class="modal-close" onclick="closeModal('trash')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<div id="trashList" style="max-height:55vh;overflow-y:auto;padding:0 16px">
+<div style="text-align:center;padding:30px;color:#71717a">Papierkorb ist leer</div>
+</div>
+<div style="padding:16px;border-top:1px solid rgba(255,255,255,.05)">
+<button onclick="emptyTrash()" class="btn btn-secondary" style="width:100%;background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.3)">Papierkorb leeren</button>
+<p style="font-size:11px;color:#52525b;text-align:center;margin-top:8px">Einträge werden nach 30 Tagen automatisch gelöscht</p>
+</div>
+</div></div>
+
+<!-- Language Modal -->
+<div class="modal" id="languageModal" onclick="if(event.target===this)closeModal('language')">
+<div class="modal-sheet" style="max-width:340px">
+<div class="modal-handle"></div>
+<div class="modal-header"><h3 class="modal-title">🌍 Sprache / Language</h3><button class="modal-close" onclick="closeModal('language')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+<button class="lang-option" id="langBtnDe" onclick="selectLanguage('de')">
+    <span class="lang-flag">🇩🇪</span>
+    <span class="lang-name">Deutsch</span>
+    <span class="lang-check" id="langCheckDe">✓</span>
+</button>
+<button class="lang-option" id="langBtnEn" onclick="selectLanguage('en')">
+    <span class="lang-flag">🇬🇧</span>
+    <span class="lang-name">English</span>
+    <span class="lang-check" id="langCheckEn">✓</span>
+</button>
+</div>
+</div></div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span id="toastText">Saved!</span></div>
+
+<!-- Guest Info Share Modal -->
+<div class="modal" id="guestInfoModal" onclick="if(event.target===this)closeGuestInfoModal()">
+<div class="modal-sheet qr-modal">
+<div class="modal-handle"></div>
+<div class="qr-modal-header">
+    <div class="qr-modal-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+    </div>
+    <h3>Gästeinfo teilen</h3>
+    <button class="qr-close-btn" onclick="closeGuestInfoModal()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+</div>
+<div class="qr-code-container">
+    <div class="qr-code-frame">
+        <div class="qr-corner qr-corner-tl"></div>
+        <div class="qr-corner qr-corner-tr"></div>
+        <div class="qr-corner qr-corner-bl"></div>
+        <div class="qr-corner qr-corner-br"></div>
+        <div class="qr-code-inner"><img src="https://quickchart.io/qr?text=https://motus-booking.pages.dev/guest-info&size=180&dark=000000&light=ffffff" alt="QR"></div>
+    </div>
+</div>
+<div class="qr-url-display">
+    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <span>motus-booking.pages.dev/guest-info</span>
+</div>
+<div class="qr-actions">
+    <button class="qr-action-btn" onclick="copyGuestInfoLink()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+        <span>Kopieren</span>
+    </button>
+    <button class="qr-action-btn qr-action-wa" onclick="shareGuestInfoWA()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg></div>
+        <span>WhatsApp</span>
+    </button>
+    <button class="qr-action-btn" onclick="window.open('https://motus-booking.pages.dev/guest-info','_blank')">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <span>Öffnen</span>
+    </button>
+    <button class="qr-action-btn qr-action-close" onclick="closeGuestInfoModal()">
+        <div class="qr-action-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+        <span>Schließen</span>
+    </button>
+</div>
+</div></div>
+
+<!-- Trips Submenu -->
+<div class="modal trips-submenu" id="tripsSubmenu" onclick="if(event.target===this)closeTripsSubmenu()">
+<div class="modal-sheet submenu-sheet">
+<div class="modal-handle"></div>
+<div class="submenu-header">
+    <button class="submenu-back" onclick="closeTripsSubmenu()">‹</button>
+    <span class="submenu-title">✈️ Reisen</span>
+    <button class="submenu-add-icon" onclick="closeTripsSubmenu();openNewTrip()" title="Neue Reise">+</button>
+</div>
+
+<div class="submenu-content">
+    <!-- Trips Dropdown -->
+    <div class="submenu-section">
+        <div class="submenu-section-header">
+            <span>📅 Geplante Reisen</span>
+            <span class="submenu-badge" id="submenuTripsCount">0</span>
+        </div>
+
+        <div class="trips-dropdown" id="tripsDropdown">
+            <div class="trips-dropdown-selected" id="tripsDropdownSelected" onclick="toggleTripsDropdown()">
+                <span class="dropdown-placeholder">Keine Reisen</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="trips-dropdown-list" id="tripsDropdownList"></div>
+        </div>
+    </div>
+
+    <!-- Archived Trips -->
+    <div class="submenu-section archived-section" id="archivedSection" style="display:none">
+        <div class="submenu-section-header archived-header" onclick="toggleArchivedTrips()">
+            <span>📦 Archiviert</span>
+            <span class="submenu-badge archived-badge" id="archivedCount">0</span>
+            <span class="archived-toggle" id="archivedToggle">▶</span>
+        </div>
+        <div class="archived-list" id="archivedList" style="display:none"></div>
+    </div>
+
+</div>
+</div>
+</div>
+
+<!-- Trip Modal -->
+<div class="modal trip-modal" id="tripModal" onclick="if(event.target===this)closeTripModal()">
+<div class="modal-sheet">
+<div class="modal-handle"></div>
+<div class="modal-header">
+    <h3 class="modal-title" id="tripModalTitle">Neue Reise</h3>
+    <button class="modal-close" onclick="closeTripModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+</div>
+<div class="modal-content" style="padding:16px">
+    <input type="hidden" id="tripId">
+
+    <!-- Name -->
+    <div class="trip-form-section">
+        <div class="trip-form-title">📝 Bezeichnung</div>
+        <input type="text" class="trip-form-input" id="tripName" placeholder="z.B. London Congress, Wien Workshop...">
+    </div>
+
+    <!-- Standort Selection -->
+    <div class="trip-form-section">
+        <div class="trip-form-title">📍 Standort</div>
+        <div id="tripLocationSelector" class="location-selector"></div>
+    </div>
+
+    <!-- Dates -->
+    <div class="trip-form-section">
+        <div class="trip-form-title">📅 Zeitraum</div>
+        <div class="trip-form-row">
+            <div class="trip-form-group">
+                <label class="trip-form-label">Von</label>
+                <input type="date" class="trip-form-input" id="tripStartDate">
+            </div>
+            <div class="trip-form-group">
+                <label class="trip-form-label">Bis</label>
+                <input type="date" class="trip-form-input" id="tripEndDate">
+            </div>
+        </div>
+        <div class="trip-form-row">
+            <div class="trip-form-group">
+                <label class="trip-form-label">Startzeit täglich</label>
+                <input type="time" class="trip-form-input" id="tripStartTime" value="09:00">
+            </div>
+            <div class="trip-form-group">
+                <label class="trip-form-label">Endzeit täglich</label>
+                <input type="time" class="trip-form-input" id="tripEndTime" value="20:00">
+            </div>
+        </div>
+    </div>
+
+    <!-- Venue -->
+    <div class="trip-form-section">
+        <div class="trip-form-title">🏢 Unterrichtsort (Venue)</div>
+        <div class="venue-input-wrap" style="margin-bottom:12px">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <input type="text" class="trip-form-input" id="tripVenueName" placeholder="z.B. Excel Centre, Tanzschule XY...">
+        </div>
+        <div class="address-autocomplete-wrap" style="position:relative;margin-bottom:12px">
+            <input type="text" class="trip-form-input" id="tripVenueAddress" placeholder="Adresse eingeben..." autocomplete="off">
+            <div class="address-suggestions" id="addressSuggestions"></div>
+        </div>
+        <input type="url" class="trip-form-input" id="tripMapsLink" placeholder="Google Maps Link (optional)">
+    </div>
+
+    <!-- Preis -->
+    <div class="trip-form-section">
+        <div class="trip-form-title">💰 Preis pro 45 Min</div>
+        <div class="trip-form-row">
+            <div class="trip-form-group">
+                <label class="trip-form-label">Reisepreis (optional)</label>
+                <input type="number" class="trip-form-input" id="tripPrice45" placeholder="z.B. 120" style="padding-right:40px">
+                <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#71717a;font-size:14px;pointer-events:none">€</span>
+            </div>
+        </div>
+        <div style="font-size:11px;color:#71717a;margin-top:4px">Überschreibt den Standard-Preis für diese Reise</div>
+    </div>
+
+    <!-- Days Selection (shown after date selection) -->
+    <div class="days-selection" id="tripDaysSection" style="display:none">
+        <div class="days-selection-header">
+            <span class="days-selection-title">📆 Tage auswählen</span>
+        </div>
+        <div id="tripDaysGrid" class="days-grid"></div>
+    </div>
+
+    <!-- Save Button -->
+    <button type="button" class="btn" style="width:100%;margin-top:20px;background:#c9a227;color:#000;font-weight:600" onclick="saveTrip()">Speichern</button>
+
+    <!-- Delete Button (for editing) -->
+    <button id="tripDeleteBtn" class="btn" style="width:100%;margin-top:12px;background:transparent;border:1px solid #ef4444;color:#ef4444;display:none" onclick="deleteTrip()">Archivieren</button>
+</div>
+</div>
+</div>
+
+<script>
+function shareGuestInfo(){document.getElementById('guestInfoModal').classList.add('open')}
+function closeGuestInfoModal(){document.getElementById('guestInfoModal').classList.remove('open')}
+function copyGuestInfoLink(){
+    const url='https://motus-booking.pages.dev/guest-info';
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(()=>{
+            document.getElementById('toastText').textContent='Link kopiert!';
+            document.getElementById('toast').classList.add('show');
+            setTimeout(()=>document.getElementById('toast').classList.remove('show'),2000);
+        }).catch(()=>{prompt('Link kopieren:',url);});
+    }else{prompt('Link kopieren:',url);}
+}
+function shareGuestInfoWA(){window.open('https://wa.me/?text='+encodeURIComponent('Hier findest du alle wichtigen Infos zu Anreise & Hotels für deinen Besuch bei uns im mōtus studio: https://motus-booking.pages.dev/guest-info'),'_blank')}
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAg7kL1jqnLKJCu-GRqvHB8WDdBRxJ05dc&libraries=places" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="config.js?v=1"></script>
+<script src="app.js?v=5"></script>
+</body>
+</html>
+<!-- v1735207200 -->

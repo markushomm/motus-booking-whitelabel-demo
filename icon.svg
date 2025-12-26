@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#1a1a1a"/>
+  <!-- Bigger calendar -->
+  <rect x="80" y="115" width="352" height="300" rx="30" fill="none" stroke="#f0d060" stroke-width="12"/>
+  <rect x="80" y="115" width="352" height="75" rx="30" fill="#f0d060"/>
+  <rect x="80" y="160" width="352" height="30" fill="#f0d060"/>
+  <!-- Bigger hooks -->
+  <rect x="160" y="75" width="28" height="70" rx="14" fill="#f0d060"/>
+  <rect x="324" y="75" width="28" height="70" rx="14" fill="#f0d060"/>
+  <!-- Bigger infinity symbol -->
+  <path d="M156 295 C156 245, 206 245, 256 295 C306 345, 356 345, 356 295 C356 245, 306 245, 256 295 C206 345, 156 345, 156 295" fill="none" stroke="#f0d060" stroke-width="24" stroke-linecap="round"/>
+</svg>
